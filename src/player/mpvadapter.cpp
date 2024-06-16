@@ -591,12 +591,18 @@ void MpvAdapter::open(const QString     &file,
 
     QByteArray filename = file.toUtf8();
     QByteArray opts = options.join(',').toUtf8();
+    char *argOpts = opts.isEmpty() ? NULL : opts.data();
 
-    const char *args[5] = {
+    /* Since mpv client API 2.3 (mpv 0.38.0) "loadfile" places an extra argument before the options,
+       so we need to conditionally re-arrange the arguments array */
+    bool isApi23 = mpv_client_api_version() >= MPV_MAKE_VERSION(2, 3);
+
+    const char *args[] = {
         "loadfile",
         filename,
         append ? "append-play" : "replace",
-        opts.isEmpty() ? NULL : opts.data(),
+        isApi23 ? "0"     : argOpts,
+        isApi23 ? argOpts : NULL,
         NULL
     };
 
@@ -914,15 +920,10 @@ QString MpvAdapter::tempAudioClip(
     file.close();
 
     QByteArray input = getPath().toUtf8();
-    QByteArray optionCmd;
-    optionCmd += QString("start=%1").arg(start, 0, 'f', 3).toUtf8();
-    optionCmd += QString(",end=%1").arg(end, 0, 'f', 3).toUtf8();
-    optionCmd += QString(",aid=%1").arg(aid).toUtf8();
     const char *args[] = {
         "loadfile",
         input,
         "replace",
-        optionCmd.isEmpty() ? NULL : optionCmd.data(),
         NULL
     };
 
@@ -943,6 +944,9 @@ QString MpvAdapter::tempAudioClip(
     mpv_set_option_string(enc_h, "secondary-sid", "no");
     mpv_set_option_string(enc_h, "ytdl", "yes");
     mpv_set_option_string(enc_h, "config", "no");
+    mpv_set_option_string(enc_h, "start", QString("%1").arg(start, 0, 'f', 3).toUtf8().data());
+    mpv_set_option_string(enc_h, "end", QString("%1").arg(end, 0, 'f', 3).toUtf8().data());
+    mpv_set_option_string(enc_h, "aid", QString("%1").arg(aid).toUtf8().data());
     mpv_set_option_string(enc_h, "o", filename);
     if (normalize)
     {
