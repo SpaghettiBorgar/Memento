@@ -48,6 +48,7 @@
 #define REPLACE_SENTENCE            "{sentence}"
 #define REPLACE_SENTENCE_SEC        "{sentence-2}"
 #define REPLACE_TAGS                "{tags}"
+#define REPLACE_TAGS_BRIEF          "{tags-brief}"
 #define REPLACE_TITLE               "{title}"
 
 /* Term Markers */
@@ -486,7 +487,7 @@ private:
      * @param[out] tagStr The string to append to.
      * @return tagstr
      */
-    QString &accumulateTags(const QList<Tag> &tags, QString &tagStr);
+    void buildTags(const QList<Tag> &tags, QString &tagStr, QString &tagBriefStr);
 
     /**
      * Helper method to convert file to base64.
